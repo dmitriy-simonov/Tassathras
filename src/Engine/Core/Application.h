@@ -1,8 +1,8 @@
 #pragma once
 #include "Window.h"
-#include "Graphics/Shader.h"
-#include "Graphics/Buffers/VertexArray.h"
 #include "Graphics/Texture.h"
+#include "Graphics/Camera.h"
+#include "Core/Timestep.h"
 
 #include <memory>
 #include <iostream>
@@ -35,13 +35,15 @@ namespace Tassathras
 	private:
 		void init();
 		void shutdown();
-
+	private:
 		std::unique_ptr<Tassathras::Window> m_window;
 		bool m_running = true;
 		static Application* s_instance;
 
-		std::shared_ptr<Tassathras::Shader> m_shader;
-		std::shared_ptr<Tassathras::VertexArray> m_vertexArray;
-		std::shared_ptr<Tassathras::Texture> m_texture;
+		std::unique_ptr<Camera> m_camera;
+		float m_lastFrameTime = 0.0f;
+
+		std::shared_ptr<Texture> m_texture;
+
 	};
 }

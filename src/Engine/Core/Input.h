@@ -9,8 +9,13 @@ namespace Tassathras
 	public:
 		static bool isKeyPressed(int keycode);
 		static bool isMouseButtonPressed(int button);
+
+		static bool isKeyJustPressed(int keycode);
+		static bool isMouseButtonJustPressed(int button);
+
 		static glm::vec2 getMousePosition();
 
+		static void update();
 		static void setKeyPressed(int keycode, bool isPressed);
 		static void setMouseButtonPressed(int button, bool isPressed);
 		static void setMousePosition(float x, float y);
@@ -20,7 +25,11 @@ namespace Tassathras
 		static constexpr size_t MAX_MOUSE_BUTTONS = 8;
 
 		static std::array<bool, MAX_KEYS> m_keys;
+		static std::array<bool, MAX_KEYS> m_keyLastFrame;
+
 		static std::array<bool, MAX_MOUSE_BUTTONS> m_mouseButtons;
+		static std::array<bool, MAX_MOUSE_BUTTONS> m_mouseButtonsLastFrame;
+
 		static glm::vec2 m_mousePos;
 
 	private:

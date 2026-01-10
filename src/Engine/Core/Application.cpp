@@ -2,6 +2,7 @@
 #include "Graphics/Renderers/Renderer2D.h"
 #include "Input.h"
 #include "Graphics/Texture.h"
+#include "Timestep.h"
 
 #include<GLFW/glfw3.h>
 #include<glm/gtc/matrix_transform.hpp>
@@ -35,10 +36,16 @@ namespace Tassathras
 	void Application::init()
 	{
 		m_window = std::make_unique<Tassathras::Window>(Tassathras::WindowProps());
+
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		Renderer2D::init();
 		glEnable(GL_BLEND);
+
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+		float aspectRatio = (float)m_window->getWidth() / (float)m_window->getHeight();
+		m_camera = std::make_unique<Camera>(-aspectRatio, aspectRatio, -1.0f, 1.0f);
+		
 
 		m_texture = std::make_shared<Texture>("assets/textures/test.png");
 	}
@@ -50,35 +57,59 @@ namespace Tassathras
 	}
 	void Application::run()
 	{
-		glm::mat4 projection = glm::ortho(-1.778f, 1.778f, -1.0f, 1.0f);
-
 		while (!m_window->isClosed() && m_running)
 		{
-			m_window->onUpdate();
+			float time = (float)glfwGetTime();
+			Timestep ts = time - m_lastFrameTime;
+			m_lastFrameTime = time;
+
+			glm::vec3 camPos = m_camera->getPosition();
+			float camSpeed = 3.0f * ts;
+
+			if (Input::isKeyPressed(GLFW_KEY_W))
+			{
+				camPos.y += camSpeed;
+				std::cout << camPos.y << " W pressed!" << std::endl;
+			}
+			if (Input::isKeyPressed(GLFW_KEY_S))
+			{
+				camPos.y -= camSpeed;
+				std::cout << camPos.y << " S pressed!" << std::endl;
+			}
+			if (Input::isKeyPressed(GLFW_KEY_A))
+			{
+				camPos.x -= camSpeed;
+				std::cout << camPos.x << " A pressed!" << std::endl;
+			}
+			if (Input::isKeyPressed(GLFW_KEY_D))
+			{
+				camPos.x += camSpeed;
+				std::cout << camPos.x << " D pressed!" << std::endl;
+			}
+
+
+			m_camera->setPosition(camPos);
 
 ;
 			if (Input::isMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT))
 			{
-				glm::vec2 pos = Input::getMousePosition();
-				std::cout << "left click at: " << pos.x << ", " << pos.y << std::endl;
+				auto mousePos = Input::getMousePosition();
+				std::cout << "left click at: " << mousePos.x << ", " << mousePos.y << std::endl;
 			}
-			if (Input::isKeyPressed(GLFW_KEY_W))
-				std::cout << "w pressed\n";
-			if (Input::isKeyPressed(GLFW_KEY_A))
-				std::cout << "A is pressed\n";
-			if (Input::isKeyPressed(GLFW_KEY_D))
-				std::cout << "D is pressed\n";
-			if (Input::isKeyPressed(GLFW_KEY_S))
-				std::cout << "S is pressed\n";
 			
+			glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT); // for clear color;
 
 
-			Renderer2D::beginScene(projection);
+			Renderer2D::beginScene(m_camera->getViewProjectionMatrix());
 			//Renderer2D::drawQuad({ -1.0f, 0.0f }, { 0.3f, 0.3f }, { 0.0f, 0.0f, 1.0f, 1.0f });
 			Renderer2D::drawQuad({ 0.0f, 0.0f }, { 0.5f, 0.5f }, m_texture);
+			Renderer2D::drawQuad({ 1.0f, 1.0f }, { 0.4f, 0.4f }, { 0.8f, 0.2f, 0.2f, 1.0f });
 
 			Renderer2D::endScene();
+
+			m_window->onUpdate();
+			Input::update();
 		}
 	}
 
