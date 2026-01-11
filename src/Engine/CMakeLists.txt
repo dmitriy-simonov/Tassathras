@@ -3,7 +3,7 @@ file(GLOB_RECURSE ENGINE_SOURCES
 	"${CMAKE_CURRENT_SOURCE_DIR}/*.h"
 )
 
-add_library(Engine STATIC ${ENGINE_SOURCES} "Core/Timestep.h")
+add_library(Engine STATIC ${ENGINE_SOURCES} "Core/Timestep.h" "Core/LayerStack.h" "Core/LayerStack.cpp")
 set_target_properties(Engine PROPERTIES
     MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
 )

@@ -3,6 +3,7 @@
 #include "Graphics/Texture.h"
 #include "Graphics/Camera.h"
 #include "Core/Timestep.h"
+#include "LayerStack.h"
 
 #include <memory>
 #include <iostream>
@@ -31,8 +32,13 @@ namespace Tassathras
 		Application(Application&& other) noexcept = default;
 		Application& operator=(Application&& other) noexcept = default;
 
+		void pushLayer(Layer* layer);
+		inline Camera& getCamera() { return *m_camera; }
+
 
 	private:
+		LayerStack m_layerStack;
+
 		void init();
 		void shutdown();
 	private:
