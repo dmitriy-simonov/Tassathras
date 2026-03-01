@@ -1,47 +1,49 @@
 #pragma once
-#include<glad/glad.h>
-#include<GLFW/glfw3.h>
-#include<string>
-#include<memory>
-
-
+#include <string>
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
 
 namespace Tassathras
 {
-	struct WindowData;
-	// instructions for create
 	struct WindowProps
 	{
-		std::string m_title;
-		unsigned int m_width;
-		unsigned int m_height;
+		std::string title;
+		uint32_t w;
+		uint32_t h;
 
-		WindowProps(const std::string& title = "Engine", unsigned int width = 1280, unsigned int height = 720)
-			: m_title(title), m_width(width), m_height(height) { }
+		WindowProps(const std::string& t = "tassathras engi", uint32_t width = 1280, uint32_t height = 720)
+			: title(t), w(width), h(height) { }
 	};
+
 
 	class Window
 	{
 	public:
-		Window(const WindowProps& proprs);
+		Window(const WindowProps& props);
 		~Window();
 
 		void onUpdate();
-		bool isClosed() const;
-		unsigned int getWidth() const;
-		unsigned int getHeight() const;
-		GLFWwindow* getNativeWindow() const { return m_window; }
-	private:
-		virtual void init(const WindowProps& props);
-		virtual void shutdown();
+		bool shouldClose() const;
 
+
+		uint32_t getWidth() const { return m_data.w; }
+		uint32_t getHeight() const { return m_data.h; }
+		GLFWwindow* getNativeWindow() const { return m_window; }
+
+	private:
+		void init(const WindowProps& props);
+		void shutdown();
+
+	private:
 		GLFWwindow* m_window;
 		
-		std::unique_ptr<WindowData> m_data;
+		struct WindowData
+		{
+			uint32_t w;
+			uint32_t h;
+			std::string title;
+		};
 
-		static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
-		static void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
-		static void cursorPosCallback(GLFWwindow* window, double xpos, double ypos);
-
+		WindowData m_data;
 	};
 }

@@ -1,73 +1,75 @@
 #include "Texture.h"
-#include "stb_image.h"
+#include "Core/Log.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 #include <glad/glad.h>
-#include <iostream>
 
 namespace Tassathras
 {
-	Texture::Texture(const std::string& path)
-		: m_rendererID(0), m_filePath(path), m_localBuffer(nullptr),
-		  m_width(0), m_height(0), m_BPP(0)
+	Texture2D::Texture2D(const std::string& path)
+		: m_path(path), m_internalFormat(GL_RGBA8), m_dataFormat(GL_RGBA)
 	{
-		stbi_set_flip_vertically_on_load(1);
+		stbi_set_flip_vertically_on_load(true);
 
-		m_localBuffer = stbi_load(path.c_str(), &m_width, &m_height, &m_BPP, 4);
+		unsigned char* data = stbi_load(path.c_str(), &m_width, &m_height, &m_channels, 4);
 
-		if (m_localBuffer)
+		if (data)
 		{
 			glGenTextures(1, &m_rendererID);
 			glBindTexture(GL_TEXTURE_2D, m_rendererID);
 
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glTexImage2D(GL_TEXTURE_2D, 0, m_internalFormat, m_width, m_height, 0, m_dataFormat, GL_UNSIGNED_BYTE, data);
+			glGenerateMipmap(GL_TEXTURE_2D);
 
-
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_width, m_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, m_localBuffer);
-
-			glBindTexture(GL_TEXTURE_2D, 0);
-
-			stbi_image_free(m_localBuffer);
+			stbi_image_free(data);
 		}
-		else
-			std::cerr << "failed to load texture: " << path << std::endl;
+		else {
+			TS_CORE_ERROR("Failed to load texture at: {0}", path);
+		}
 	}
 
-	Texture::Texture(uint32_t width, uint32_t height)
-		: m_rendererID(0), m_filePath(""), m_localBuffer(nullptr),
-		  m_width(width), m_height(height), m_BPP(4)
+	Texture2D::Texture2D(uint32_t width, uint32_t height)
+		: m_width(width), m_height(height), m_internalFormat(GL_RGBA8), m_dataFormat(GL_RGBA)
 	{
 		glGenTextures(1, &m_rendererID);
 		glBindTexture(GL_TEXTURE_2D, m_rendererID);
 
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-		uint32_t whiteColor = 0xffffffff;
-		unsigned char colorData[4] = { 255, 0, 0, 255 };
-
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, m_width, m_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, &whiteColor);
-
-		glBindTexture(GL_TEXTURE_2D, 0);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	}
 
-	Texture::~Texture()
+	Texture2D::~Texture2D()
 	{
 		glDeleteTextures(1, &m_rendererID);
 	}
 
-	void Texture::bind(unsigned int slot) const
+	void Texture2D::setData(void* data, uint32_t size)
+	{
+		uint32_t bpp = (m_dataFormat == GL_RGBA) ? 4 : 3;
+		if (size != m_width * m_height * bpp) {
+			TS_CORE_ERROR("Data must be entire texture!");
+			return;
+		}
+
+		glBindTexture(GL_TEXTURE_2D, m_rendererID);
+		glTexImage2D(GL_TEXTURE_2D, 0, m_internalFormat, m_width, m_height, 0, m_dataFormat, GL_UNSIGNED_BYTE, data);
+	}
+
+	void Texture2D::bind(unsigned int slot) const
 	{
 		glActiveTexture(GL_TEXTURE0 + slot);
 		glBindTexture(GL_TEXTURE_2D, m_rendererID);
 	}
 
-	void Texture::unbind() const
+	void Texture2D::unbind() const
 	{
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}

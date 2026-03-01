@@ -3,7 +3,7 @@ file(GLOB_RECURSE GAME_SOURCES
 	"${CMAKE_CURRENT_SOURCE_DIR}/*.h"
 )
 
-add_executable(Game ${GAME_SOURCES})
+add_executable(Game ${GAME_SOURCES} "Data/TileData.h" "Game.h" "Game.cpp")
 
 
 target_include_directories(Game PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/..")

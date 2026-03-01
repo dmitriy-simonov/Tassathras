@@ -1,15 +1,13 @@
-#include "Engine/Core/Application.h"
-#include "Game/Core/LevelLayer.h"
-#include <iostream>
-
+#include "Game.h"
 
 int main()
 {
 
-	Tassathras::Application app;
+	auto* app = new Game();
 
-	app.pushLayer(new Game::LevelLayer());
-	app.run();
+	app->run();
+
+	delete app;
 
 
 	return 0;

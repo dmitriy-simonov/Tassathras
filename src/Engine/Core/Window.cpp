@@ -1,137 +1,109 @@
 #include "Window.h"
+#include "Log.h"
 #include "Input.h"
-#include <GLFW/glfw3.h>
-#include <iostream>
 
 namespace Tassathras
 {
-	//working container for state and API GLFW
-	struct WindowData
-	{
-		std::string title;
-		unsigned int width = 0;
-		unsigned int height = 0;
-		//next here callback's GLFW
-	};
-	static bool s_GLFWInit = false;
-	// === callback functions ==
-	void GLFWErrorCallback(int error, const char* description)
-	{
-		std::cerr << "glfw error (" << error << "): " << description << std::endl;
-	}
-	void windowResizeCallback(GLFWwindow* window, int w, int h)
-	{
-		WindowData* data = (WindowData*)glfwGetWindowUserPointer(window);
-		data->height = h;
-		data->width = w;
-
-		glViewport(0, 0, w, h);
-		
-	}
-	// === end's callback functions ===
 	Window::Window(const WindowProps& props)
 	{
-		m_data = std::make_unique<WindowData>();
 		init(props);
 	}
 	Window::~Window()
 	{
 		shutdown();
 	}
-	unsigned int Window::getWidth() const { return m_data->width; }
-	unsigned int Window::getHeight() const { return m_data->height; }
 
-	bool Window::isClosed() const
-	{
-		return glfwWindowShouldClose(m_window);
-	}
 	void Window::init(const WindowProps& props)
 	{
-		m_data->title = props.m_title;
-		m_data->width = props.m_width;
-		m_data->height = props.m_height;
+		m_data.title = props.title;
+		m_data.w = props.w;
+		m_data.h = props.h;
 
-		std::cout << "creating window " << props.m_title << " ( " << props.m_width << ", "
-			<< props.m_height << ")" << std::endl;
+		TS_CORE_INFO("create window {0} {1} {2}", props.title, props.w, props.h);
 
-		if (!s_GLFWInit)
+		if (!glfwInit())
 		{
-			int success = glfwInit();
-			if (success)
-			{
-				s_GLFWInit = true;
-				glfwSetErrorCallback(GLFWErrorCallback);
-
-				glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-				glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-				glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-			}
-			else
-			{
-				std::cerr << "failed to init glfw" << std::endl;
-				return;
-			}
+			TS_CORE_ERROR("not init glfw");
+			return;
 		}
-		m_window = glfwCreateWindow((int)props.m_width, (int)props.m_height, props.m_title.c_str(), nullptr, nullptr);
-		
+		glfwSetErrorCallback([](int error, const char* description) {
+			TS_CORE_ERROR("GLFW Error ({0}): {1}", error, description);
+			});
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+		m_window = glfwCreateWindow(
+			static_cast<int>(props.w), 
+			static_cast<int>(props.h),
+			m_data.title.c_str(), 
+			nullptr, 
+			nullptr);
+
+
 		if (!m_window)
 		{
-			std::cerr << "failder to creat glfw window" << std::endl;
+			TS_CORE_ERROR("failed create glfw window");
 			glfwTerminate();
 			return;
 		}
 
-		//contectopengl
 		glfwMakeContextCurrent(m_window);
-
-		int status = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
-		if(!status)
+		//Сюда ещё вернусь попозже, мог заюзать си-каст, но решил не делать, всё равно этот каст в итоге будет использовать реинтепрет
+		//здесь приведение указателя на ф-ию, специфичное для API
+		//В дальнейшем пересмотрю использование
+		int status = gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress));
+		if (!status)
 		{
-			std::cerr << "failed to init glad" << std::endl;
+			TS_CORE_INFO("failed init glad");
 			return;
 		}
-		//for callback's
-		glfwSetWindowUserPointer(m_window, this);
-		glfwSetWindowSizeCallback(m_window, windowResizeCallback);
+		glfwSetWindowUserPointer(m_window, &m_data);
+		glfwSwapInterval(1);
 
-		glfwSetKeyCallback(m_window, keyCallback);
-		glfwSetMouseButtonCallback(m_window, mouseButtonCallback);
-		glfwSetCursorPosCallback(m_window, cursorPosCallback);
 
-		std::cout << "opengl info:\n";
-		std::cout << "vendor: " << glGetString(GL_VENDOR) << std::endl;
-		std::cout << "version: " << glGetString(GL_VERSION) << std::endl;
-		std::cout << "renderer: " << glGetString(GL_RENDERER) << std::endl;
+		//keyboard
+		glfwSetKeyCallback(m_window, [](GLFWwindow* window, int key, int scancode, int action, int mods) {
+			if (action == GLFW_PRESS)
+				Input::setKeyPressed(static_cast<KeyCode>(key), true);
+			else if (action == GLFW_RELEASE)
+				Input::setKeyPressed(static_cast<KeyCode>(key), false);
+		});
+
+		//mouse buttons
+		glfwSetMouseButtonCallback(m_window, [](GLFWwindow* window, int button, int action, int mods) {
+			if (action == GLFW_PRESS)
+				Input::setMouseButtonPressed(static_cast<KeyCode>(button), true);
+			else if (action == GLFW_RELEASE)
+				Input::setMouseButtonPressed(static_cast<KeyCode>(button), false);
+		});
+
+		//mouse position
+		glfwSetCursorPosCallback(m_window, [](GLFWwindow* window, double xpos, double ypos) {
+			Input::setMousePosition(static_cast<float>(xpos), static_cast<float>(ypos));
+		});
+
+		//mouse scroll
+		glfwSetScrollCallback(m_window, [](GLFWwindow* window, double xoffset, double yoffset) {
+			Input::setScrollOffset(static_cast<float>(yoffset));
+		});
 	}
-	void Window::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+
+	void Window::onUpdate()
 	{
-		if (action == GLFW_PRESS)
-			Input::setKeyPressed(key, true);
-		else if (action == GLFW_RELEASE)
-			Input::setKeyPressed(key, false);
+		glfwPollEvents();
+		glfwSwapBuffers(m_window);
 	}
-	void Window::mouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
+
+	bool Window::shouldClose() const
 	{
-		if (action == GLFW_PRESS)
-			Input::setMouseButtonPressed(button, true);
-		else if (action == GLFW_RELEASE)
-			Input::setMouseButtonPressed(button, false);
-	}
-	void Window::cursorPosCallback(GLFWwindow* window, double xpos, double ypos)
-	{
-		Input::setMousePosition((float)xpos, (float)ypos);
+		return static_cast<bool>(glfwWindowShouldClose(m_window));
 	}
 
 	void Window::shutdown()
 	{
 		glfwDestroyWindow(m_window);
+		glfwTerminate();
 	}
 
-	void Window::onUpdate()
-	{
-		glfwSwapBuffers(m_window);
-
-
-		glfwPollEvents();
-	}
 }

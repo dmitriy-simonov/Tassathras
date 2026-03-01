@@ -1,7 +1,7 @@
 #pragma once
-#include "VertexBufferLayout.h"
-#include <glad/glad.h>
-#include <vector>
+#include "VertexFormat.h"
+#include <cstdint>
+
 namespace Tassathras
 {
 
@@ -9,21 +9,23 @@ namespace Tassathras
 	class VertexBuffer
 	{
 	public:
-		VertexBuffer(unsigned int size); //fix size vbo
-		VertexBuffer(const void* data, unsigned int size);
+		VertexBuffer(uint32_t size); //fix size vbo
+		VertexBuffer(const void* data, uint32_t size);
 		~VertexBuffer();
+
+		VertexBuffer(const VertexBuffer&) = delete;
+		VertexBuffer& operator=(const VertexBuffer&) = delete;
 
 		void bind() const;
 		void unbind() const;
 
-		void setData(const void* data, unsigned int size);
+		void setData(const void* data, uint32_t size, uint32_t offset = 0);
 
-		void setLayout(const VertexBufferLayout& layout) { m_layout = layout; }
-		inline const VertexBufferLayout& getLayout() const { return m_layout; }
-
+		void setFormat(const VertexFormat& format) { m_format = format; }
+		const VertexFormat& getFormat() const { return m_format; }
 	private:
-		unsigned int m_rendererID;
+		uint32_t m_rendererID;
+		VertexFormat m_format;
 
-		VertexBufferLayout m_layout;
 	};
 }

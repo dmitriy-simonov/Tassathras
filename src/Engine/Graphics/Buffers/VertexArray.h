@@ -3,6 +3,8 @@
 #include "VertexBuffer.h"
 #include <memory>
 #include <vector>
+
+
 namespace Tassathras
 {
 	class VertexArray
@@ -22,7 +24,7 @@ namespace Tassathras
 		inline const std::shared_ptr<IndexBuffer>& getIndexBuffer() const { return m_indexBuffers; }
 
 	private:
-		unsigned int m_rendererID;
+		uint32_t m_rendererID;
 		std::vector<std::shared_ptr<VertexBuffer>> m_vertexBuffers;
 		std::shared_ptr<IndexBuffer> m_indexBuffers;
 	};

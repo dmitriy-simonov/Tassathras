@@ -1,7 +1,27 @@
 #include "VertexArray.h"
+#include <glad/glad.h>
 
 namespace Tassathras
 {
+	static GLenum ShaderDataTypeToOpenGLBaseType(ShaderDataType type)
+	{
+		switch (type)
+		{
+		case Tassathras::ShaderDataType::Float: return	GL_FLOAT;
+		case Tassathras::ShaderDataType::Float2: return GL_FLOAT;
+		case Tassathras::ShaderDataType::Float3: return GL_FLOAT;
+		case Tassathras::ShaderDataType::Float4: return GL_FLOAT;
+		case Tassathras::ShaderDataType::Mat3: return	GL_FLOAT;
+		case Tassathras::ShaderDataType::Mat4: return	GL_FLOAT;
+		case Tassathras::ShaderDataType::Int: return	GL_INT;
+		case Tassathras::ShaderDataType::Int2: return	GL_INT;
+		case Tassathras::ShaderDataType::Int3: return	GL_INT;
+		case Tassathras::ShaderDataType::Int4: return	GL_INT;
+		case Tassathras::ShaderDataType::Bool: return	GL_BOOL;
+		}
+		return 0;
+	}
+
 	VertexArray::VertexArray()
 	{
 		glGenVertexArrays(1, &m_rendererID);
@@ -24,36 +44,29 @@ namespace Tassathras
 
 	void VertexArray::addVertexBuffer(const std::shared_ptr<VertexBuffer>& vertexBuffer)
 	{
-		glBindVertexArray(m_rendererID);
-
+		this->bind();
 		vertexBuffer->bind();
 
-		const auto& layout = vertexBuffer->getLayout();
-
-		unsigned int offset = 0;
-
-		for (unsigned int i = 0; i < layout.getElements().size(); i++)
+		const auto& format = vertexBuffer->getFormat();
+		uint32_t index = 0;
+		for (const auto& element : format)
 		{
-			const auto& element = layout.getElements()[i];
-
-			glEnableVertexAttribArray(i);
-
-			glVertexAttribPointer(
-				i,
-				element.count,
-				element.type,
-				element.normalized,
-				layout.getStride(),
-				(const void*)(intptr_t)offset
-			);
-			offset += element.count * VertexBufferElement::getSizeOfType(element.type);
+			glEnableVertexAttribArray(index);
+			glVertexAttribPointer(index,
+				element.GetComponentCount(),
+				ShaderDataTypeToOpenGLBaseType(element.Type),
+				element.Normalized ? GL_TRUE : GL_FALSE,
+				format.getStride(),
+				(const void*)(uintptr_t)element.Offset);
+			index++;
 		}
+
 		m_vertexBuffers.push_back(vertexBuffer);
 	}
 
 	void VertexArray::setIndexBuffer(const std::shared_ptr<IndexBuffer>& indexBuffer)
 	{
-		glBindVertexArray(m_rendererID);
+		bind();
 		indexBuffer->bind();
 		m_indexBuffers = indexBuffer;
 	}

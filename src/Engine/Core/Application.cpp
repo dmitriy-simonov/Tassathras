@@ -1,86 +1,52 @@
 #include "Application.h"
-#include "Graphics/Renderers/Renderer2D.h"
+#include "Log.h"
 #include "Input.h"
-#include "Graphics/Texture.h"
-#include "Timestep.h"
-
-
-#include<GLFW/glfw3.h>
-#include<glm/gtc/matrix_transform.hpp>
-
-
+#include <GLFW/glfw3.h>
+#include <iostream>
 
 namespace Tassathras
 {
-	
 	Application* Application::s_instance = nullptr;
 
 	Application::Application()
 	{
 		s_instance = this;
-		init();
+		Log::init();
+		m_window = std::make_unique<Window>(WindowProps());
 	}
 
 	Application::~Application()
 	{
-		shutdown();
-	}
-	//===============================================================
-	// life cycle
-	//===============================================================
-	void Application::init()
-	{
-		m_window = std::make_unique<Tassathras::Window>(Tassathras::WindowProps());
-
-		Renderer2D::init();
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-		float aspectRatio = (float)m_window->getWidth() / (float)m_window->getHeight();
-		m_camera = std::make_unique<Camera>(-aspectRatio, aspectRatio, -1.0f, 1.0f);
-		
-	
-	}
-
-	void Application::shutdown()
-	{
-		Renderer2D::shutdown();
-		glfwTerminate();
-	}
-
-	void Application::pushLayer(Layer* layer)
-	{
-		m_layerStack.pushLayer(layer);
-		layer->onAttach();
+		TS_CORE_INFO("engine shutdown");
 	}
 
 	void Application::run()
 	{
-		while (!m_window->isClosed() && m_running)
+		onStart();
+
+		float lastFrameTime = 0.0f;
+		int frameCount = 0;
+
+		while (m_running && !m_window->shouldClose())
 		{
-			float time = (float)glfwGetTime();
-			Timestep ts = time - m_lastFrameTime;
-			m_lastFrameTime = time;
-
-
-			for (Layer* layer : m_layerStack)
-				layer->onUpdate(ts);
-
-			
+			float time = static_cast<float>(glfwGetTime());
+			float dt = time - lastFrameTime;
+			lastFrameTime = time;
+			if (dt > 0.1f) dt = 0.1f;
 			glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-			glClear(GL_COLOR_BUFFER_BIT); // for clear color;
-
-
-			Renderer2D::beginScene(m_camera->getViewProjectionMatrix());
-		
-			for (Layer* layer : m_layerStack)
-				layer->onRender();
-
-			Renderer2D::endScene();
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			onUpdate(dt);
+			onRender();
+			Tassathras::Input::transition();
 
 			m_window->onUpdate();
-			Input::update();
+
 		}
 	}
 
+	void Application::stop()
+	{
+
+		m_running = false;
+	}
 }

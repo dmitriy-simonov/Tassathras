@@ -1,15 +1,6 @@
 #pragma once
 #include "Window.h"
-#include "Graphics/Texture.h"
-#include "Graphics/Camera.h"
-#include "Core/Timestep.h"
-#include "LayerStack.h"
-
 #include <memory>
-#include <iostream>
-#include <glm/glm.hpp>
-
-
 
 namespace Tassathras
 {
@@ -20,36 +11,21 @@ namespace Tassathras
 		virtual ~Application();
 
 		void run();
+		void stop();
 
+		virtual void onStart() {}
+		virtual void onUpdate(float dt) {}
+		virtual void onRender() {}
 
 		static Application& get() { return *s_instance; }
-		Tassathras::Window& getWindow() { return *m_window; }
-
-	public:
-		Application(const Application& other) = delete;
-		Application& operator=(const Application& other) = delete;
-
-		Application(Application&& other) noexcept = default;
-		Application& operator=(Application&& other) noexcept = default;
-
-		void pushLayer(Layer* layer);
-		inline Camera& getCamera() { return *m_camera; }
-
+		Window& getWindow() { return *m_window; }
 
 	private:
-		LayerStack m_layerStack;
-
-		void init();
-		void shutdown();
-	private:
-		std::unique_ptr<Tassathras::Window> m_window;
+		std::unique_ptr<Window> m_window;
 		bool m_running = true;
+
 		static Application* s_instance;
-
-		std::unique_ptr<Camera> m_camera;
-		float m_lastFrameTime = 0.0f;
-
-		std::shared_ptr<Texture> m_texture;
-
 	};
+
+	Application* createApplication();
 }

@@ -3,55 +3,110 @@
 
 namespace Tassathras
 {
-	std::array<bool, Input::MAX_KEYS> Input::m_keys = {};
-	std::array<bool, Input::MAX_KEYS> Input::m_keyLastFrame = {};
-	std::array<bool, Input::MAX_MOUSE_BUTTONS> Input::m_mouseButtons = {};
-	std::array<bool, Input::MAX_MOUSE_BUTTONS> Input::m_mouseButtonsLastFrame = {};
-	glm::vec2 Input::m_mousePos = { 0.0f, 0.0f };
+	std::array<bool, Input::MAX_KEYS> Input::s_keys = {};
+	std::array<bool, Input::MAX_KEYS> Input::s_keyLastFrame = {};
+	std::array<bool, Input::MAX_MOUSE_BUTTONS> Input::s_mouseButtons = {};
+	std::array<bool, Input::MAX_MOUSE_BUTTONS> Input::s_mouseButtonsLastFrame = {};
+	glm::vec2 Input::s_mousePos = { 0.0f, 0.0f };
+	float Input::s_scrollOffset = 0.0f;
+	float Input::s_scrollOffsetLastFrame = 0.0f;
+	float Input::s_scrollY = 0.0f;
 
-	void Input::update()
+	void Input::transition()
 	{
-		m_keyLastFrame = m_keys;
-		m_mouseButtonsLastFrame = m_mouseButtons;
+		s_keyLastFrame = s_keys;
+		s_mouseButtonsLastFrame = s_mouseButtons;
+
+		s_scrollOffsetLastFrame = s_scrollOffset;
+		s_scrollOffset = 0.0f;
+
+		s_scrollY = 0.0f;
 	}
 
-	bool Input::isKeyPressed(int keycode)
+	void Input::clear()
 	{
-		return m_keys[keycode];
+		s_keys.fill(false);
+		s_keyLastFrame.fill(false);
+		s_mouseButtons.fill(false);
+		s_mouseButtonsLastFrame.fill(false);
+		s_scrollOffset = 0.0f;
+		s_scrollOffsetLastFrame = 0.0f;
+		s_scrollY = 0.0f;
 	}
 
-	bool Input::isKeyJustPressed(int keycode)
+	bool Input::isKeyPressed(KeyCode keycode)
 	{
-		return m_keys[keycode] && !m_keyLastFrame[keycode];
+		return (keycode >= 0 && keycode < MAX_KEYS) ? s_keys[keycode] : false;
 	}
 
-
-	bool Input::isMouseButtonPressed(int button)
+	bool Input::isKeyJustPressed(KeyCode keycode)
 	{
-		return m_mouseButtons[button];
+		return (keycode >= 0 && keycode < MAX_KEYS) ? (s_keys[keycode] && !s_keyLastFrame[keycode]) : false;
 	}
 
-	bool Input::isMouseButtonJustPressed(int button)
+	bool Input::isKeyReleased(KeyCode keycode)
 	{
-		return m_mouseButtons[button] && !m_mouseButtonsLastFrame[button];
+		return (keycode >= 0 && keycode < MAX_KEYS) ? (!s_keys[keycode] && s_keyLastFrame[keycode]) : false;
+	}
+
+	bool Input::isMouseButtonPressed(KeyCode button)
+	{
+		return (button >= 0 && button < MAX_MOUSE_BUTTONS) ? s_mouseButtons[button] : false;
+	}
+
+	bool Input::isMouseButtonJustPressed(KeyCode button)
+	{
+		return (button >= 0 && button < MAX_MOUSE_BUTTONS) ? (s_mouseButtons[button] && !s_mouseButtonsLastFrame[button]) : false;
+	}
+
+	bool Input::isMouseButtonReleased(KeyCode button)
+	{
+		return (button >= 0 && button < MAX_MOUSE_BUTTONS) ? (!s_mouseButtons[button] && s_mouseButtonsLastFrame[button]) : false;
 	}
 
 	glm::vec2 Input::getMousePosition()
 	{
-		return m_mousePos;
+		return s_mousePos;
 	}
 
-	void Input::setKeyPressed(int keycode, bool isPressed)
+	float Input::getMouseX()
 	{
-		if (keycode >= 0 && keycode < MAX_KEYS) m_keys[keycode] = isPressed;
+		return s_mousePos.x;
 	}
-	void Input::setMouseButtonPressed(int button, bool isPressed)
+
+	float Input::getMouseY()
 	{
-		if (button >= 0 && button < MAX_MOUSE_BUTTONS) m_mouseButtons[button] = isPressed;
+		return s_mousePos.y;
+	}
+
+	float Input::getScrollY()
+	{
+		return s_scrollOffsetLastFrame;
+	}
+
+	float Input::getScrollDelta()
+	{
+		return s_scrollY;
+	}
+
+	void Input::setKeyPressed(KeyCode keycode, bool isPressed)
+	{
+		if (keycode >= 0 && keycode < MAX_KEYS) s_keys[keycode] = isPressed;
+	}
+
+	void Input::setMouseButtonPressed(KeyCode button, bool isPressed)
+	{
+		if (button >= 0 && button < MAX_MOUSE_BUTTONS) s_mouseButtons[button] = isPressed;
 	}
 
 	void Input::setMousePosition(float x, float y)
 	{
-		m_mousePos = { x, y };
+		s_mousePos = { x, y };
+	}
+
+	void Input::setScrollOffset(float offset)
+	{
+		s_scrollOffset = offset;
+		s_scrollY += offset; 
 	}
 }
