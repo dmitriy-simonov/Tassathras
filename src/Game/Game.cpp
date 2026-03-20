@@ -147,7 +147,7 @@ void Game::onUpdate(float dt)
 
 void Game::onRender()
 {
-    glClearColor(0.05f, 0.05f, 0.07f, 1.0f);
+    glClearColor(0.04f, 0.05f, 0.07f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
     if (m_state == GameState::MainMenu)
